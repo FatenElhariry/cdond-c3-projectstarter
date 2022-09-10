@@ -8,16 +8,16 @@ commands:
         type: string 
     steps:
       - run:
-        name: Destroy environments
-        when: on_fail
-        command: |
-          if aws s3 ls | grep udapeople-<<parameters.workflow_id>>; then
-            aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
-          fi
-          aws cloudformation delete-stack --stack-name frontend-<<parameters.workflow_id>>
-          aws cloudformation delete-stack --stack-name backend-<<parameters.workflow_id>>
+          name: Destroy environments
+          when: on_fail
+          command: |
+              if aws s3 ls | grep udapeople-<<parameters.workflow_id>>; then
+                aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
+              fi
+              aws cloudformation delete-stack --stack-name frontend-<<parameters.workflow_id>>
+              aws cloudformation delete-stack --stack-name backend-<<parameters.workflow_id>>
       - revert-migrations:
-        workflow_id: <<parameters.workflow_id>>
+          workflow_id: <<parameters.workflow_id>>
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -26,19 +26,19 @@ commands:
         type: string
     steps:
       - run:
-          name: Revert migrations
-          when: on_fail
-          command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS=$(curl -H "token: <<parameters.workflow_id>>" \
-              --request GET https://api.memstash.io/values/migration-<<parameters.workflow_id>>)
-            if(( $SUCCESS==1 )); 
-            then
-             cd ~/project/backend
-             npm install
-            #  Add revert code here. You can find this in the Getting Started section.
-              npm run migrations:revert
-            fi
+        name: Revert migrations
+        when: on_fail
+        command: |
+          # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
+          SUCCESS=$(curl -H "token: <<parameters.workflow_id>>" \
+            --request GET https://api.memstash.io/values/migration-<<parameters.workflow_id>>)
+          if(( $SUCCESS==1 )); 
+          then
+            cd ~/project/backend
+            npm install
+          #  Add revert code here. You can find this in the Getting Started section.
+            npm run migrations:revert
+          fi
             
 jobs:
   build-frontend:
