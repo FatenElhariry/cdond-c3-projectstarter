@@ -1,0 +1,1 @@
+aws cloudformation deploy --template-file cloudfront.yml --stack-name initial-infrestracture --parameter-overrides WorkflowID=tyrk80vizc

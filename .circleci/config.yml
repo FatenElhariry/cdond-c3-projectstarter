@@ -1,44 +1,61 @@
 version: 2.1
 
-# commands:
-#   destroy-environment:
-#     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-#     parameters:
-#       workflow_id:
-#         type: string 
-#     steps:
-#       - run:
-#           name: Destroy environments
-#           when: on_fail
-#           command: |
-#               if aws s3 ls | grep udapeople-<<parameters.workflow_id>>; then
-#                 aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
-#               fi
-#               aws cloudformation delete-stack --stack-name frontend-<<parameters.workflow_id>>
-#               aws cloudformation delete-stack --stack-name backend-<<parameters.workflow_id>>
-#       - revert-migrations:
-#           workflow_id: <<parameters.workflow_id>>
+commands:
+  install_awscli:
+    description: Install AWS CLI v2
+    steps:
+      - run:
+          name: Install AWS CLI v2
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
 
-#   revert-migrations:
-#     description: Revert the last migration if successfully run in the current workflow.
-#     parameters:
-#       workflow_id:
-#         type: string
-#     steps:
-#       - run:
-#           name: Revert migrations
-#           when: on_fail
-#           command: |
-#             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-#             SUCCESS=$(curl -H "token: <<parameters.workflow_id>>" \
-#               --request GET https://api.memstash.io/values/migration-<<parameters.workflow_id>>)
-#             if(( $SUCCESS==1 )); 
-#             then
-#               cd ~/project/backend
-#               npm install
-#             #  Add revert code here. You can find this in the Getting Started section.
-#               npm run migrations:revert
-#             fi
+  install_ansible:
+    description: Install Ansible
+    steps:
+      - run:
+          name: Install Ansible
+          command: |
+            python3 -m pip install --user ansible
+  destroy-environment:
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+    parameters:
+      workflow_id:
+        type: string 
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+              if aws s3 ls | grep udapeople-<<parameters.workflow_id>>; then
+                aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
+              fi
+              aws cloudformation delete-stack --stack-name frontend-<<parameters.workflow_id>>
+              aws cloudformation delete-stack --stack-name backend-<<parameters.workflow_id>>
+      - revert-migrations:
+          workflow_id: <<parameters.workflow_id>>
+
+  revert-migrations:
+    description: Revert the last migration if successfully run in the current workflow.
+    parameters:
+      workflow_id:
+        type: string
+    steps:
+      - run:
+          name: Revert migrations
+          when: on_fail
+          command: |
+            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
+            SUCCESS=$(curl -H "token: <<parameters.workflow_id>>" \
+              --request GET https://api.memstash.io/values/migration-<<parameters.workflow_id>>)
+            if(( $SUCCESS==1 )); 
+            then
+              cd ~/project/backend
+              npm install
+            #  Add revert code here. You can find this in the Getting Started section.
+              npm run migrations:revert
+            fi
             
 jobs:
   build-frontend:
@@ -134,64 +151,63 @@ jobs:
             npm audit fix --force --audit-level=critical 
             npm audit --audit-level=critical --force
 
-  # deploy-infrastructure:
-  #   docker:
-  #     - image: amazon/aws-cli
-  #   steps:
-  #     # Checkout code from git
-  #     - run:
-  #         name: Ensure back-end infrastructure exists
-  #         command: |
-  #           aws cloudformation deploy \
-  #             --template-file .circleci/files/backend.yml \
-  #             #--tags project=your-tag \
-  #             # --stack-name "your back-end stack name with workflow id" \
-  #             # --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
-  #             exit 1
-  #     - run:
-  #         name: Ensure front-end infrastructure exist
-  #         command: |
-  #           aws cloudformation deploy \
-  #             --template-file .circleci/files/frontend.yml \
-  #             #--tags project=your-tag \
-  #             # --stack-name "your front-end stack name with workflow id" \
-  #             # --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
-  #             exit 1
-  #     - run:
-  #         name: Add back-end ip to ansible inventory
-  #         command: |
-  #           export BACKEND_URL=$(curl -H "token: ${CIRCLE_WORKFLOW_ID}" \
-  #               --request GET https://api.memstash.io/values/backendurl)
-  #             echo "${BACKEND_URL}" >> .circleci/ansible/inventory.txt
-  #             cat .circleci/ansible/inventory.txt
-  #     - persist_to_workspace:
-  #         root: ~/
-  #         paths:
-  #           - project/.circleci/ansible/inventory.txt
-  #       # Here's where you will add some code to rollback on failure     
-  #     - destroy-environment:
-  #        workflow_id: "${CIRCLE_WORKFLOW_ID}" 
+  deploy-infrastructure:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - install_awscli
+      - run:
+          name: Ensure back-end infrastructure exists
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/backend.yml \
+              --tags project=udapeople \
+              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+      - run:
+          name: Ensure front-end infrastructure exist
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --tags project=udapeople \
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+      - run:
+          name: Add back-end ip to ansible inventory
+          command: |
+            BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text)
+            echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.txt
+            cat .circleci/ansible/inventory.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
+      - destroy-environment
 
-  # configure-infrastructure:
-  #   docker:
-  #     - image: python:3.9.1-alpine3.12
-  #   steps:
-  #     - checkout
-  #     - add_ssh_keys:
-  #         fingerprints:
-  #           - "	e9:55:aa:b4:5e:c0:07:6c:fb:e3:31:9f:c9:a3:c8:01"
-  #     - attach_workspace:
-  #         at: /tmp/.circleci/ansible
-  #     - run:
-  #         name: Install dependencies
-  #         command: |
-  #           apk add --update ansible aws-cli
-  #     - run:
-  #         name: Configure server
-  #         command: |
-  #           ansible-playbook -i /tmp/.circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
-  #     - destroy-environment:
-  #         workflow_id: "${CIRCLE_WORKFLOW_ID}"    
+  configure-infrastructure:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "	e9:55:aa:b4:5e:c0:07:6c:fb:e3:31:9f:c9:a3:c8:01"
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible aws-cli
+      - run:
+          name: Configure server
+          command: |
+            ansible-playbook -i /tmp/.circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID}"    
 
   # run-migrations:
   #   docker:
@@ -410,13 +426,13 @@ workflows:
           requires: [build-backend]
       - scan-frontend:
           requires: [build-frontend]
-      # - deploy-infrastructure:
-      #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-      #     filters:
-      #       branches:
-      #         only: [test-feature-branch]
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
+      - deploy-infrastructure:
+          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          filters:
+            branches:
+              only: [test-feature-branch]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
       # - run-migrations:
       #     requires: [configure-infrastructure]
       # - deploy-frontend:
