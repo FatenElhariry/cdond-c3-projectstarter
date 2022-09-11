@@ -304,8 +304,8 @@ jobs:
             tar -czf artifact.tar.gz dist/* package*
 
             # Copy the files to the deploy role files folder to prepare for deploying it via ansible
-            
-            cp artifact.tar.gz .circleci/ansible/roles/deploy/files
+            cd ..
+            cp backend/artifact.tar.gz .circleci/ansible/roles/deploy/files
       - run:
           name: Deploy backend
           command: |
