@@ -184,6 +184,10 @@ jobs:
       - run:
           name: Ensure front-end infrastructure exist
           command: |
+            WORKFLOW_ID=$(aws cloudformation \
+                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                      --no-paginate --output text)
+                      
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
