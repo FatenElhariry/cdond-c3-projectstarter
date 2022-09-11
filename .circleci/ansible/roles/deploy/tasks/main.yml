@@ -3,6 +3,10 @@
   file:
     path: ~/backend-app
     state: directory
+- name: "copy artifcat to new enstance"
+  copy:
+    src: ~/project/.circleci/ansible/roles/deploy/artifact.tar.gz
+    dest: ~/backend-app
 
 - name: "Unarchive backend files"
   unarchive:

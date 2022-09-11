@@ -312,6 +312,7 @@ jobs:
             ansible-playbook -i inventory.txt deploy-backend.yml
       - destroy-environment
       - revert-migrations
+  
   smoke-test:
     docker:
       - image: cimg/base:stable
