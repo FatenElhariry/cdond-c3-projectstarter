@@ -4,13 +4,13 @@
     path: ~/backend-app
     state: directory
 
-- copy:
-    src: ~/.circleci/ansible/roles/deploy/files/artifact.tar.gz
-    dest: ~/backend-app
+# - copy:
+#     src: artifact.tar.gz
+#     dest: ~/backend-app
 
-# - name: "list current directory"
-#   shell: |
-#     ls -al
+- name: "list current directory"
+  shell: |
+    ls -al
 
 - name: "Unarchive backend files"
   unarchive:
