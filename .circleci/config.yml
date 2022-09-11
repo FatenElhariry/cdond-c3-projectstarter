@@ -306,6 +306,7 @@ jobs:
             # Copy the files to the deploy role files folder to prepare for deploying it via ansible
             cd ..
             cp backend/artifact.tar.gz .circleci/ansible/roles/deploy/files
+            ls -al ./.circleci/ansible/roles/deploy/files
       - run:
           name: Deploy backend
           command: |
