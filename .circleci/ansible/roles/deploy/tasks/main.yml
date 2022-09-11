@@ -4,13 +4,9 @@
     path: ~/backend-app
     state: directory
 
-# - copy:
-#     src: ~/.circleci/ansible/roles/deploy/files/artifact.tar.gz
-#     dest: ~/backend-app
-
 - name: "Unarchive backend files"
   unarchive:
-    src: artifact.tar.gz
+    src: ./roles/deploy/files/artifact.tar.gz
     dest: ~/backend-app
 
 - name: "Installing Node Dependencies"
