@@ -301,11 +301,10 @@ jobs:
             npm run build
 
             # Archive the contents of the dist folder, along with backned package information
-            cd backend
             tar -czf artifact.tar.gz dist/* package*
 
             # Copy the files to the deploy role files folder to prepare for deploying it via ansible
-            cd ../..
+            cd ..
             cp backend/artifact.tar.gz .circleci/ansible/roles/deploy/files
       - run:
           name: Deploy backend
