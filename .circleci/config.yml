@@ -30,7 +30,7 @@ commands:
             # Install Node.js LTS version as our base Node.js version
             curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
             sudo apt install -y nodejs
-            # Use n version manager to use Node.js v13.8.0
+            # Use n version manager to use Node.js LTS
             sudo npm install --global n
             sudo n 13.8.0
   destroy-environment:
@@ -289,8 +289,11 @@ jobs:
             
             cd frontend
             npm run build
-            
-            aws s3 cp dist s3://udapeople-tyrk80vizc --recursive
+            WORKFLOW_ID=$(aws cloudformation \
+                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                      --no-paginate --output text)
+            echo "${WORKFLOW_ID}"
+            aws s3 cp dist s3://udapeople-${WORKFLOW_ID} --recursive
       - destroy-environment
       - revert-migrations
                     

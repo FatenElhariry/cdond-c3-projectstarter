@@ -1,0 +1,60 @@
+# sudo nano /etc/prometheus/prometheus.yml 
+global:
+  scrape_interval: 15s
+  external_labels:
+    monitor: 'prometheus'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    ec2_sd_configs:
+      - region: us-est-1
+        port: 9100
+        filters:
+          - name: tag:project
+            values: [UdaPeople]
+    relabel_configs:
+      - source_labels: [__meta_ec2_tag_Name, __meta_ec2_tag_project]
+        separator: "_"
+        target_label: instance
+      - source_labels: [__meta_ec2_instance_id]
+        target_label: instance_id
+      - source_labels: [__meta_ec2_public_dns_name]
+        target_label: public_dns_name
+
+
+    # static_configs:
+    #   - targets: ['localhost:9090']
+      
+# service config 
+# sudo nano /etc/systemd/system/prometheus.service
+[Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/usr/local/bin/prometheus \
+    --config.file /etc/prometheus/prometheus.yml \
+    --storage.tsdb.path /var/lib/prometheus/ \
+    --web.console.templates=/etc/prometheus/consoles \
+    --web.console.libraries=/etc/prometheus/console_libraries
+
+[Install]
+WantedBy=multi-user.target
+
+# /etc/systemd/system/node-exporter.service
+[Unit]
+Description=Prometheus Node Exporter Service
+After=network.target
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+ExecStart=/usr/local/bin/node_exporter
+
+[Install]
+WantedBy=multi-user.target
