@@ -58,3 +58,63 @@ ExecStart=/usr/local/bin/node_exporter
 
 [Install]
 WantedBy=multi-user.target
+
+# /etc/prometheus/rules.yml
+
+groups:
+- name: Down
+  rules:
+  - alert: InstanceDown
+    expr: up == 0
+    for: 3m
+    labels:
+      severity: 'critical'
+    annotations:
+      summary: "Instance  is down"
+      description: " of job  has been down for more than 3 minutes."
+
+# /etc/prometheus/alertmanager.yml
+global:
+  resolve_timeout: 1m
+  slack_api_url: 'https://hooks.slack.com/services/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'
+
+route:
+  group_by: [Alertname]
+  receiver: 'alert-me'
+
+receivers:
+- name: 'alert-me'
+  email_configs:
+  - to: aelhariry78@yahoo.com
+    from: aelhariry78@gmail.com
+    smarthost: smtp.gmail.com:587
+    auth_username: aelhariry78@gmail.com
+    auth_identity: aelhariry78@gmail.com
+    auth_password: zjdipcezgbejjyyt
+
+  slack_configs:
+  - channel: '#udapeople-alerts'
+    send_resolved: true
+    icon_url: https://avatars3.githubusercontent.com/u/3380462
+    title: |-
+     [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+     {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
+       {{" "}}(
+       {{- with .CommonLabels.Remove .GroupLabels.Names }}
+         {{- range $index, $label := .SortedPairs -}}
+           {{ if $index }}, {{ end }}
+           {{- $label.Name }}="{{ $label.Value -}}"
+         {{- end }}
+       {{- end -}}
+       )
+     {{- end }}
+    text: >-
+     {{ range .Alerts -}}
+     *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - `{{ .Labels.severity }}`{{ end }}
+
+     *Description:* {{ .Annotations.description }}
+
+     *Details:*
+       {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+       {{ end }}
+     {{ end }}
