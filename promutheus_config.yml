@@ -66,12 +66,12 @@ groups:
   rules:
   - alert: InstanceDown
     expr: up == 0
-    for: 3m
+    for: 1m
     labels:
       severity: 'critical'
     annotations:
-      summary: "Instance  is down"
-      description: " of job  has been down for more than 3 minutes."
+      summary: "Instance {{ $labels.instance }} is down"
+      description: " of job  has been down for more than 1 minutes."
 
 # /etc/prometheus/alertmanager.yml
 global:
@@ -90,7 +90,7 @@ receivers:
     smarthost: smtp.gmail.com:587
     auth_username: aelhariry78@gmail.com
     auth_identity: aelhariry78@gmail.com
-    auth_password: zjdipcezgbejjyyt
+    auth_password: envydftneabodkki
 
   slack_configs:
   - channel: '#udapeople-alerts'
@@ -118,3 +118,22 @@ receivers:
        {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
        {{ end }}
      {{ end }}
+
+# /etc/systemd/system/alertmanager.service
+[Unit]
+Description=Alert Manager
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=prometheus
+Group=prometheus
+ExecStart=/usr/local/bin/alertmanager \
+  --config.file=/etc/prometheus/alertmanager.yml \
+  --storage.path=/var/lib/alertmanager
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
