@@ -31,7 +31,7 @@ commands:
             curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
             sudo apt install -y nodejs
             # Use n version manager to use Node.js LTS
-            npm install--global n
+            npm installv --global n
             sudo n 13.8.0
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
