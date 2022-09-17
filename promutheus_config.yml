@@ -1,3 +1,4 @@
+# https://codewizardly.com/prometheus-on-aws-ec2-part4/
 # sudo nano /etc/prometheus/prometheus.yml 
 global:
   scrape_interval: 15s
@@ -24,6 +25,38 @@ scrape_configs:
 
     # static_configs:
     #   - targets: ['localhost:9090']
+      
+
+
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  - "rules.yml"
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: "prometheus"
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+    
+    static_configs:
+      - targets: ["localhost:9090"]
       
 # service config 
 # sudo nano /etc/systemd/system/prometheus.service
@@ -62,13 +95,29 @@ WantedBy=multi-user.target
 # /etc/prometheus/rules.yml
 
 groups:
-- name: Down
+- name: example
   rules:
+
+  # Alert for any instance that is unreachable for >5 minutes.
   - alert: InstanceDown
     expr: up == 0
     for: 1m
     labels:
       severity: 'critical'
+    annotations:
+      summary: "Instance {{ $labels.instance }} down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minutes."
+
+
+
+groups:
+  - name: Down
+    rules:
+    - alert: InstanceDown
+      expr: up == 0
+      for: 1m
+      labels:
+        severity: 'critical'
     annotations:
       summary: "Instance {{ $labels.instance }} is down"
       description: " of job  has been down for more than 1 minutes."
@@ -137,3 +186,31 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
+
+# 
+groups:
+- name: example
+  rules:
+
+  # Alert for any instance that is unreachable for >5 minutes.
+  - alert: InstanceDown
+    expr: up == 0
+    for: 5m
+    labels:
+      severity: page
+    annotations:
+      summary: "Instance {{ $labels.instance }} down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
+
+  # Alert for any instance that has a median request latency >1s.
+  - alert: APIHighRequestLatency
+    expr: api_http_request_latencies_second{quantile="0.5"} > 1
+    for: 10m
+    annotations:
+      summary: "High request latency on {{ $labels.instance }}"
+      description: "{{ $labels.instance }} has a median request latency above 1s (current value: {{ $value }}s)"
+
+
+
+# 
+# curl -X POST --data-urlencode "payload={\"channel\": \"#udapeople-alerts\", \"username\": \"webhookbot\", \"text\": \"This is posted to #udapeople-alerts and comes from a bot named webhookbot.\", \"icon_emoji\": \":ghost:\"}" https://hooks.slack.com/services/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
