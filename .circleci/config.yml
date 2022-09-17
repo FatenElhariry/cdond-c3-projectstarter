@@ -75,7 +75,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-deps]
+          keys: [frontend-deps1]
       - run:
           name: Build front-end
           command: |
@@ -84,7 +84,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [frontend/node_modules]
-          key: frontend-deps
+          key: frontend-deps1
 
   build-backend:
     docker:
@@ -92,7 +92,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-deps]
+          keys: [backend-deps01]
       - run:
           name: Back-end build
           command: |
@@ -101,7 +101,7 @@ jobs:
             npm run build
       - save_cache:
           paths: [backend/node_modules]
-          key: backend-deps
+          key: backend-deps01
 
   test-frontend:
     docker:
@@ -109,7 +109,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-deps]
+          keys: [frontend-deps1]
       - run:
           name: frontend tests
           command: |
@@ -122,7 +122,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-deps]
+          keys: [backend-deps01]
       - run:
           name: backend tests
           command: |
@@ -135,7 +135,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-deps]
+          keys: [frontend-deps1]
       - run:
           name: frontend scan
           command: |
@@ -151,7 +151,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-deps]
+          keys: [backend-deps01]
       - run:
           name: backend scan
           command: |
@@ -253,7 +253,7 @@ jobs:
       - install_awscli
       - install_nodejs
       - restore_cache:
-          keys: [frontend-deps]
+          keys: [frontend-deps1]
       - run:
           name: Install dependencies
           command: |
@@ -294,7 +294,7 @@ jobs:
       - attach_workspace:
           at: ~/
       - restore_cache:
-          keys: [backend-deps]
+          keys: [backend-deps01]
       - run:
           name: Install dependencies
           command: |
