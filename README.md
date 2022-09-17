@@ -61,6 +61,8 @@ Before you submit your project, please check your work against the project rubri
 
 #### kvdb 
   `curl -d '1' https://kvdb.io/F98afvRN8s4D8JzyyE92TT/hello`
+### remove cache dependances 
+  `curl -X DELETE https://circleci.com/api/v1/project/:username/:project/build-cache?circle-token=:token`
 ### License
 
 [License](LICENSE.md)
