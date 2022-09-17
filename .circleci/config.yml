@@ -227,12 +227,15 @@ jobs:
             ansible-playbook -i inventory.txt configure-server.yml
       - destroy-environment
 
+      
   run-migrations:
     docker:
       - image: cimg/node:13.8.0
     steps:
       - checkout
       - install_awscli
+      - restore_cache:
+          keys: [backend-deps]
       - run:
           name: Run migrations
           command: |
@@ -263,7 +266,6 @@ jobs:
           name: Install dependencies
           command: |
             cd frontend
-            
             npm install
       - run:
           name: Get backend url
@@ -305,7 +307,6 @@ jobs:
           name: Install dependencies
           command: |
             cd backend
-            
             npm install
       - run:
           name: Package Backend
